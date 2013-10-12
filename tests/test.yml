@@ -1,0 +1,16 @@
+parameters:
+    test.service: Test\Three
+    test.arg: '@one'
+
+services:
+    one:
+        class:     'Test\One'
+        arguments: ['a', 'b']
+        calls:
+            - [third, ['c']]
+    two:
+        class:     'Test\Two'
+        arguments: ['@one']
+    three:
+        class:     '%test.service%'
+        arguments: ['%test.arg%']
