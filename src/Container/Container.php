@@ -115,4 +115,9 @@ class Container {
 				return $argument;
 		}
 	}
+
+	public function _show () {
+		print_r($this->parameters);
+		print_r($this->services);
+	}
 }
