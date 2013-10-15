@@ -1,6 +1,9 @@
 <?php
 namespace Container;
 
+require '/home/webuser/new/http/src/HTTP/Post.php';
+require '/home/webuser/new/http/src/HTTP/Response.php';
+
 class Container {
 	private $services = [];
 	private $parameters = [];
@@ -28,6 +31,9 @@ class Container {
 			foreach ($config['services'] as $serviceName => $service) {
 				if (!isset($service['class'])) {
 					throw new \Exception('Service ' . $serviceName . ' does not specift a class');
+				}
+				if (is_array($service['class'])) {
+					throw new \Exception ('Class can not be array, near: ' . print_r($service['class'], true));
 				}
 				$first = substr($service['class'], 0, 1);
 				if ($first == '%') {
