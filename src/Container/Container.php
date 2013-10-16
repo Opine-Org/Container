@@ -1,9 +1,6 @@
 <?php
 namespace Container;
 
-require '/home/webuser/new/http/src/HTTP/Post.php';
-require '/home/webuser/new/http/src/HTTP/Response.php';
-
 class Container {
 	private $services = [];
 	private $parameters = [];
