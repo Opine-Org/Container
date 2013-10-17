@@ -6,7 +6,7 @@ class Container {
 	private $parameters = [];
 	private static $instances = [];
 
-	public function __construct ($root, $name='/container.yml') {
+	public function __construct ($root, $name='/../container.yml') {
 		$containerConfig = $root . $name;
 		if (!file_exists($containerConfig)) {
 			throw new \Exception ('Container file not found: ' . $containerConfig);
