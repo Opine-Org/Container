@@ -1,9 +1,11 @@
 <?php
 namespace Container;
+use Symfony\Component\Yaml\Yaml;
 
 class Container {
 	private $services = [];
 	private $parameters = [];
+	
 	private static $instances = [];
 
 	public function __construct ($root, $name='/../container.yml') {
@@ -11,10 +13,11 @@ class Container {
 		if (!file_exists($containerConfig)) {
 			throw new \Exception ('Container file not found: ' . $containerConfig);
 		}
-		if (!function_exists('yaml_parse')) {
-			throw new \Exception('PHP must be compiled with YAML PECL extension');
+		if (function_exists('yaml_parse')) {
+			$config = yaml_parse_file($containerConfig);
+		} else {
+			$config = Yaml::parse($containerConfig);
 		}
-		$config = yaml_parse_file($containerConfig);
 		if ($config == false) {
 			throw new \Exception('Can not parse YAML file: ' . $containerConfig);
 		}
@@ -27,7 +30,7 @@ class Container {
 		if (isset($config['services']) && is_array($config['services'])) {
 			foreach ($config['services'] as $serviceName => $service) {
 				if (!isset($service['class'])) {
-					throw new \Exception('Service ' . $serviceName . ' does not specift a class');
+					throw new \Exception('Service ' . $serviceName . ' does not specify a class');
 				}
 				if (is_array($service['class'])) {
 					throw new \Exception ('Class can not be array, near: ' . print_r($service['class'], true));
