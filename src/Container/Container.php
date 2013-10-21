@@ -5,7 +5,7 @@ use Symfony\Component\Yaml\Yaml;
 class Container {
 	private $services = [];
 	private $parameters = [];
-	
+
 	private static $instances = [];
 
 	public function __construct ($root, $name='/../container.yml') {
@@ -13,7 +13,7 @@ class Container {
 		if (!file_exists($containerConfig)) {
 			throw new \Exception ('Container file not found: ' . $containerConfig);
 		}
-		if (function_exists('yaml_parse')) {
+		if (function_exists('yaml_parse_file')) {
 			$config = yaml_parse_file($containerConfig);
 		} else {
 			$config = Yaml::parse($containerConfig);
