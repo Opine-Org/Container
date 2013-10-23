@@ -1,15 +1,44 @@
 <?php
+/**
+ * virtuecenter\container
+ *
+ * Copyright (c)2013 Ryan Mahoney, https://github.com/virtuecenter <ryan@virtuecenter.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
 namespace Container;
 use Symfony\Component\Yaml\Yaml;
 
 class Container {
-	private $services = [];
-	private $parameters = [];
+	public $services = [];
+	public $parameters = [];
 
 	private static $instances = [];
 
-	public function __construct ($root, $name='/../container.yml') {
-		$containerConfig = $root . $name;
+	public function __construct ($root, $name='/../container.yml', $parent=false) {
+		if ($parent === false) {
+			$parent = $this;
+		}
+		$containerConfig = $name;
+		if (substr($name, 0, 4) == '/../') {
+			$containerConfig = $root . $name;
+		}
 		if (!file_exists($containerConfig)) {
 			throw new \Exception ('Container file not found: ' . $containerConfig);
 		}
@@ -21,10 +50,21 @@ class Container {
 		if ($config == false) {
 			throw new \Exception('Can not parse YAML file: ' . $containerConfig);
 		}
-		$this->parameters['root'] = $root;
+		if (!isset($parent->parameters['root'])) {
+			$parent->parameters['root'] = $root;
+		}
+		if (isset($config['imports']) && is_array($config['imports'])) {
+			foreach ($config['imports'] as $import) {
+				$first = substr($import, 0, 1);
+				if ($first != '/') {
+					$import = $parent->parameters['root'] . '/' . $import; 
+				}
+				$containerImports = new Container($root, $import, $parent);
+			}
+		}
 		if (isset($config['parameters']) && is_array($config['parameters'])) {
 			foreach ($config['parameters'] as $parameterName => $parameter) {
-				$this->parameters[$parameterName] = $parameter;
+				$parent->parameters[$parameterName] = $parameter;
 			}
 		}
 		if (isset($config['services']) && is_array($config['services'])) {
@@ -38,12 +78,12 @@ class Container {
 				$first = substr($service['class'], 0, 1);
 				if ($first == '%') {
 					$service['class'] = substr($service['class'], 1, -1);
-					if (!isset($this->parameters[$service['class']])) {
+					if (!isset($parent->parameters[$service['class']])) {
 						throw new \Exception('Variable service class not defined as parameter: ' . $serviceName . ': ' . $service['class']);
 					}
-					$service['class'] = $this->parameters[$service['class']];
+					$service['class'] = $parent->parameters[$service['class']];
 				}
-				$this->services[$serviceName] = $service;
+				$parent->services[$serviceName] = $service;
 			}
 		}
 	}
