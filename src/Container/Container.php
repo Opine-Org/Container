@@ -31,13 +31,9 @@ class Container {
 
 	private static $instances = [];
 
-	public function __construct ($root, $name='/../container.yml', $parent=false) {
+	public function __construct ($root, $containerConfig, $parent=false) {
 		if ($parent === false) {
 			$parent = $this;
-		}
-		$containerConfig = $name;
-		if (substr($name, 0, 4) == '/../') {
-			$containerConfig = $root . $name;
 		}
 		if (!file_exists($containerConfig)) {
 			throw new \Exception ('Container file not found: ' . $containerConfig);
@@ -57,7 +53,7 @@ class Container {
 			foreach ($config['imports'] as $import) {
 				$first = substr($import, 0, 1);
 				if ($first != '/') {
-					$import = $parent->parameters['root'] . '/' . $import; 
+					$import = $parent->parameters['root'] . '/../' . $import; 
 				}
 				$containerImports = new Container($root, $import, $parent);
 			}
