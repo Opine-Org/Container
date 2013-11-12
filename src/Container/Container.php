@@ -102,17 +102,26 @@ class Container {
 				if (isset($service['arguments'])) {
 					$arguments = $this->_arguments($serviceName, $service['arguments'], 'construct');
 				}
-				$rc = new \ReflectionClass($service['class']);
-				self::$instances[$serviceName] = $rc->newInstanceArgs($arguments);
-				$this->_calls($serviceName, $service, self::$instances[$serviceName]);		
+				try {
+					$rc = new \ReflectionClass($service['class']);
+					self::$instances[$serviceName] = $rc->newInstanceArgs($arguments);
+					$this->_calls($serviceName, $service, self::$instances[$serviceName]);
+				} catch (\Exception $e) {
+					self::$instances[$serviceName] = false;
+					return;
+				}
 			}
 			return self::$instances[$serviceName];
 		} elseif ($scope == 'prototype') {
 			if (isset($service['arguments'])) {
 				$arguments = $this->_arguments($serviceName, $service['arguments'], 'construct');
 			}
-			$rc = new \ReflectionClass($service['class']);
-			$serviceInstance = $rc->newInstanceArgs($arguments);
+			try {
+				$rc = new \ReflectionClass($service['class']);
+				$serviceInstance = $rc->newInstanceArgs($arguments);
+			} catch (\Exception $e) {
+				$serviceInstance = false;
+			}
 		} else {
 			throw new \Exception('Unknown container scope: ' . $scope);
 		}
