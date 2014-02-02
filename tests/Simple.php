@@ -1,7 +1,7 @@
 <?php
 namespace Test;
 
-require __DIR__ . '/../src/Container/Container.php';
+require __DIR__ . '/../src/Container.php';
 use Container\Container;
 
 class One {
