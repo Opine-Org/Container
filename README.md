@@ -1,4 +1,4 @@
-container
+Container
 =========
 
-Dependency Injection Container
+Dependency Injection Container for readering YAML files
