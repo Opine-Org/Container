@@ -102,14 +102,14 @@ class Container {
                 if (isset($service['arguments'])) {
                     $arguments = $this->_arguments($serviceName, $service['arguments'], 'construct');
                 }
-                //try {
+                try {
                     $rc = new \ReflectionClass($service['class']);
                     self::$instances[$serviceName] = $rc->newInstanceArgs($arguments);
                     $this->_calls($serviceName, $service, self::$instances[$serviceName]);
-                //} catch (\Exception $e) {
-                //  self::$instances[$serviceName] = false;
-                //  return;
-                //}
+                } catch (\Exception $e) {
+                    self::$instances[$serviceName] = false;
+                    return;
+                }
             }
             return self::$instances[$serviceName];
         } elseif ($scope == 'prototype') {
