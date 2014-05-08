@@ -89,7 +89,7 @@ class Container {
             return $this;
         }
         if (!isset($this->services[$serviceName])) {
-            throw new \Exception ('Unknown service: ' . $serviceName);
+            return false;
         }
         $service = $this->services[$serviceName];
         $scope = 'container';
