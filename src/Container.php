@@ -24,30 +24,65 @@
  */
 namespace Opine;
 use Symfony\Component\Yaml\Yaml;
+use Opine\Cache;
 
 class Container {
     public $services = [];
     public $parameters = [];
-
+    public $root;
+    private $cache;
     private static $instances = [];
 
-    public function __construct ($root, $containerConfig, $parent=false) {
+    public function __construct ($root, $fallback=false, $nocache=false) {
+        $this->root = $root;
+        $config = false;
+        if ($nocache === false) {
+            $cache = new Cache();
+            $config = $cache->get($root . '-container');
+            var_dump($config);
+            exit;
+            $path = $root . '/../cache/container.json';
+            if ($config == false && file_exists($path)) {
+                $config = file_get_contents($path);
+                if ($config == false && $fallback === false) {
+                    return;
+                }
+            }
+            $config = (array)json_decode($config, true);
+            $this->processConfig($config);
+        }
+        if ($config == false && $fallback != false) {
+            $this->readfile($fallback);
+        }
+    }
+
+    public function yaml ($containerFile) {
+        if (!file_exists($containerFile)) {
+            return ['services' => [], 'imports' => []];
+        }
+        if (function_exists('yaml_parse_file')) {
+            return yaml_parse_file($containerFile);
+        }
+        return Yaml::parse($containerFile);
+    }
+
+    public function readFile ($containerConfig, $parent=false) {
         if ($parent === false) {
             $parent = $this;
         }
         if (!file_exists($containerConfig)) {
             throw new \Exception ('Container file not found: ' . $containerConfig);
         }
-        if (function_exists('yaml_parse_file')) {
-            $config = yaml_parse_file($containerConfig);
-        } else {
-            $config = Yaml::parse($containerConfig);
-        }
+        $config = $this->yaml($containerConfig);
         if ($config == false) {
             throw new \Exception('Can not parse YAML file: ' . $containerConfig);
         }
+        $this->processConfig($config, $parent);
+    }
+
+    public function processConfig ($config, $parent=false) {
         if (!isset($parent->parameters['root'])) {
-            $parent->parameters['root'] = $root;
+            $parent->parameters['root'] = $this->root;
         }
         if (isset($config['imports']) && is_array($config['imports'])) {
             foreach ($config['imports'] as $import) {
@@ -55,7 +90,7 @@ class Container {
                 if ($first != '/') {
                     $import = $parent->parameters['root'] . '/../' . $import; 
                 }
-                $containerImports = new Container($root, $import, $parent);
+                $this->readFile($import, $parent);
             }
         }
         if (isset($config['parameters']) && is_array($config['parameters'])) {
