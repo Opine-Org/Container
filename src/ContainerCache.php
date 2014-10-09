@@ -23,90 +23,89 @@
  * THE SOFTWARE.
  */
 namespace Opine;
-use Symfony\Component\Yaml\Yaml;
 
 class ContainerCache {
-	private $bundleService;
-	private $root;
-	private $cache;
-	private $containerConfig = false;
-	private $container;
+    private $bundleService;
+    private $root;
+    private $cache;
+    private $containerConfig = false;
+    private $container;
 
-	public function __construct ($root, $container, $bundleService, $cache) {
-		$this->root = $root;
-		$this->bundleService = $bundleService;
-		$this->cache = $cache;
-		$this->container = $container;
-	}
+    public function __construct ($root, $container, $bundleService, $cache) {
+        $this->root = $root;
+        $this->bundleService = $bundleService;
+        $this->cache = $cache;
+        $this->container = $container;
+    }
 
-	public function read ($containerFile) {
-		$this->containerConfig = $this->container->yaml($containerFile);
+    public function read ($containerFile) {
+        $this->containerConfig = $this->container->_yaml($containerFile);
         $bundles = $this->bundleService->bundles();
         if (!is_array($bundles) || count($bundles) == 0) {
-        	return;
+            return;
         }
         $root = pathinfo($containerFile)['dirname'] . '/bundles/';
         foreach ($bundles as $bundleName => $bundle) {
-        	$containerFile = $root . $bundleName . '/container.yml';
-        	if (!file_exists($containerFile)) {
-        		continue;
-        	}
-        	$this->merge($containerFile);
+            $containerFile = $root . $bundleName . '/container.yml';
+            if (!file_exists($containerFile)) {
+                continue;
+            }
+            $this->merge($containerFile);
         }
-	}
+    }
 
-	private function merge ($containerFile) {
-		$config = $this->container->yaml($containerFile);
-		if (isset($config['imports']) && is_array($config['imports'])) {
-			foreach ($config['imports'] as $path) {
-				if (!in_array($path, $this->containerConfig['imports'])) {
-					$this->containerConfig['imports'][] = $path;
-				}
-			}
-		}
-		if (isset($config['services']) && is_array($config['services'])) {
-			foreach ($config['services'] as $name => $service) {
-				if (!array_key_exists($name, $this->containerConfig['services'])) {
-					$this->containerConfig['services'][$name] = $service;
-				}
-			}
-		}
-	}
-
-	public function show () {
-		var_dump($this->containerConfig);
-	}
-
-	private function unfold (&$config, $sub=false) {
-		if ($sub === true) {
-			if (isset($config['services']) && is_array($config['services'])) {
-				foreach ($config['services'] as $name => $service) {
-					if (!array_key_exists($name, $this->containerConfig['services'])) {
-						$this->containerConfig['services'][$name] = $service;
-					}
-				}
-			}
-		}
-		if (isset($config['imports']) && is_array($config['imports'])) {
-            while (count($config['imports']) > 0) {
-            	$import = $config['imports'][0]; 
-            	$first = substr($import, 0, 1);
-                if ($first != '/') {
-                    $import = $this->root . '/../' . $import; 
-                }
-             	unset($config['imports'][0]);
-             	sort($config['imports']);
-             	if (file_exists($import)) {
-	                $subconfig = $this->container->yaml($import);
-	                $this->unfold($subconfig, true);
+    private function merge ($containerFile) {
+        $config = $this->container->_yaml($containerFile);
+        if (isset($config['imports']) && is_array($config['imports'])) {
+            foreach ($config['imports'] as $path) {
+                if (!in_array($path, $this->containerConfig['imports'])) {
+                    $this->containerConfig['imports'][] = $path;
                 }
             }
         }
-	}
+        if (isset($config['services']) && is_array($config['services'])) {
+            foreach ($config['services'] as $name => $service) {
+                if (!array_key_exists($name, $this->containerConfig['services'])) {
+                    $this->containerConfig['services'][$name] = $service;
+                }
+            }
+        }
+    }
 
-	public function write () {
-		$this->unfold($this->containerConfig);
-		file_put_contents($this->root . '/../cache/container.json', json_encode($this->containerConfig, JSON_PRETTY_PRINT));
-        var_dump($this->cache->set($this->root . '-container', json_encode($this->containerConfig), 2, 0));
-	}
+    public function show () {
+        var_dump($this->containerConfig);
+    }
+
+    private function unfold (&$config, $sub=false) {
+        if ($sub === true) {
+            if (isset($config['services']) && is_array($config['services'])) {
+                foreach ($config['services'] as $name => $service) {
+                    if (!array_key_exists($name, $this->containerConfig['services'])) {
+                        $this->containerConfig['services'][$name] = $service;
+                    }
+                }
+            }
+        }
+        if (isset($config['imports']) && is_array($config['imports'])) {
+            while (count($config['imports']) > 0) {
+                $import = $config['imports'][0]; 
+                $first = substr($import, 0, 1);
+                if ($first != '/') {
+                    $import = $this->root . '/../' . $import; 
+                }
+                unset($config['imports'][0]);
+                sort($config['imports']);
+                if (file_exists($import)) {
+                    $subconfig = $this->container->_yaml($import);
+                    $this->unfold($subconfig, true);
+                }
+            }
+        }
+    }
+
+    public function write () {
+        $this->unfold($this->containerConfig);
+        file_put_contents($this->root . '/../cache/container.json', json_encode($this->containerConfig, JSON_PRETTY_PRINT));
+        $this->cache->set($this->root . '-container', json_encode($this->containerConfig), 2, 0);
+    }
 }

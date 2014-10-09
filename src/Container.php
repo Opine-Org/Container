@@ -24,7 +24,10 @@
  */
 namespace Opine;
 use Symfony\Component\Yaml\Yaml;
+use ReflectionClass;
+use Exception;
 use Opine\Cache;
+use Opine\BundleRoute;
 
 class Container {
     public $services = [];
@@ -39,8 +42,6 @@ class Container {
         if ($nocache === false) {
             $cache = new Cache();
             $config = $cache->get($root . '-container');
-            var_dump($config);
-            exit;
             $path = $root . '/../cache/container.json';
             if ($config == false && file_exists($path)) {
                 $config = file_get_contents($path);
@@ -49,14 +50,31 @@ class Container {
                 }
             }
             $config = (array)json_decode($config, true);
-            $this->processConfig($config);
+            $this->_processConfig($config);
         }
-        if ($config == false && $fallback != false) {
-            $this->readfile($fallback);
+        if ($config == false && $fallback !== false) {
+            $this->_readFile($fallback);
+            $this->_bundles();
         }
     }
 
-    public function yaml ($containerFile) {
+    private function _bundles () {
+        $bundleService = new BundleRoute($this->root, $this);
+        $bundles = $bundleService->bundles();
+        if (!is_array($bundles) || count($bundles) == 0) {
+            return;
+        }
+        $root = $this->root . '/../bundles/';
+        foreach ($bundles as $bundleName => $bundle) {
+            $containerFile = $root . $bundleName . '/container.yml';
+            if (!file_exists($containerFile)) {
+                continue;
+            }
+            $this->_readFile($containerFile);
+        }
+    }
+
+    public function _yaml ($containerFile) {
         if (!file_exists($containerFile)) {
             return ['services' => [], 'imports' => []];
         }
@@ -66,55 +84,52 @@ class Container {
         return Yaml::parse($containerFile);
     }
 
-    public function readFile ($containerConfig, $parent=false) {
-        if ($parent === false) {
-            $parent = $this;
-        }
+    public function _readFile ($containerConfig) {
         if (!file_exists($containerConfig)) {
-            throw new \Exception ('Container file not found: ' . $containerConfig);
+            throw new Exception ('Container file not found: ' . $containerConfig);
         }
-        $config = $this->yaml($containerConfig);
+        $config = $this->_yaml($containerConfig);
         if ($config == false) {
-            throw new \Exception('Can not parse YAML file: ' . $containerConfig);
+            throw new Exception('Can not parse YAML file: ' . $containerConfig);
         }
-        $this->processConfig($config, $parent);
+        $this->_processConfig($config);
     }
 
-    public function processConfig ($config, $parent=false) {
-        if (!isset($parent->parameters['root'])) {
-            $parent->parameters['root'] = $this->root;
+    public function _processConfig ($config) {
+        if (!isset($this->parameters['root'])) {
+            $this->parameters['root'] = $this->root;
         }
         if (isset($config['imports']) && is_array($config['imports'])) {
             foreach ($config['imports'] as $import) {
                 $first = substr($import, 0, 1);
                 if ($first != '/') {
-                    $import = $parent->parameters['root'] . '/../' . $import; 
+                    $import = $this->parameters['root'] . '/../' . $import; 
                 }
-                $this->readFile($import, $parent);
+                $this->_readFile($import);
             }
         }
         if (isset($config['parameters']) && is_array($config['parameters'])) {
             foreach ($config['parameters'] as $parameterName => $parameter) {
-                $parent->parameters[$parameterName] = $parameter;
+                $this->parameters[$parameterName] = $parameter;
             }
         }
         if (isset($config['services']) && is_array($config['services'])) {
             foreach ($config['services'] as $serviceName => $service) {
                 if (!isset($service['class'])) {
-                    throw new \Exception('Service ' . $serviceName . ' does not specify a class');
+                    throw new Exception('Service ' . $serviceName . ' does not specify a class');
                 }
                 if (is_array($service['class'])) {
-                    throw new \Exception ('Class can not be array, near: ' . print_r($service['class'], true));
+                    throw new Exception ('Class can not be array, near: ' . print_r($service['class'], true));
                 }
                 $first = substr($service['class'], 0, 1);
                 if ($first == '%') {
                     $service['class'] = substr($service['class'], 1, -1);
-                    if (!isset($parent->parameters[$service['class']])) {
-                        throw new \Exception('Variable service class not defined as parameter: ' . $serviceName . ': ' . $service['class']);
+                    if (!isset($this->parameters[$service['class']])) {
+                        throw new Exception('Variable service class not defined as parameter: ' . $serviceName . ': ' . $service['class']);
                     }
-                    $service['class'] = $parent->parameters[$service['class']];
+                    $service['class'] = $this->parameters[$service['class']];
                 }
-                $parent->services[$serviceName] = $service;
+                $this->services[$serviceName] = $service;
             }
         }
     }
@@ -137,14 +152,14 @@ class Container {
                 if (isset($service['arguments'])) {
                     $arguments = $this->_arguments($serviceName, $service['arguments'], 'construct');
                 }
-                try {
+                //try {
                     $rc = new \ReflectionClass($service['class']);
                     self::$instances[$serviceName] = $rc->newInstanceArgs($arguments);
                     $this->_calls($serviceName, $service, self::$instances[$serviceName]);
-                } catch (\Exception $e) {
-                    self::$instances[$serviceName] = false;
-                    return;
-                }
+                //} catch (Exception $e) {
+                //    self::$instances[$serviceName] = false;
+                //    return;
+                //}
             }
             return self::$instances[$serviceName];
         } elseif ($scope == 'prototype') {
@@ -154,11 +169,11 @@ class Container {
             try {
                 $rc = new \ReflectionClass($service['class']);
                 $serviceInstance = $rc->newInstanceArgs($arguments);
-            } catch (\Exception $e) {
+            } catch (Exception $e) {
                 $serviceInstance = false;
             }
         } else {
-            throw new \Exception('Unknown container scope: ' . $scope);
+            throw new Exception('Unknown container scope: ' . $scope);
         }
         $this->_calls($serviceName, $service, $serviceInstance);
         return $serviceInstance;
@@ -170,7 +185,7 @@ class Container {
         }
         foreach ($service['calls'] as $call) {
             if (!is_array($call) || empty($call)) {
-                throw new \Exception('Invalid Service Call for: ' . $serviceName);
+                throw new Exception('Invalid Service Call for: ' . $serviceName);
             }
             $arguments = [];
             if (isset($call[1]) && is_array($call[1])) {
@@ -210,7 +225,7 @@ class Container {
             case '@':
                 $argService = substr($argument, 1);
                 if ($serviceName == $argService) {
-                    throw new \Exception('Circular reference, ' . $serviceName . ' references ' . $serviceName);
+                    throw new Exception('Circular reference, ' . $serviceName . ' references ' . $serviceName);
                 }
                 return $this->__get($argService);
                 break;
@@ -222,6 +237,6 @@ class Container {
 
     public function _show () {
         print_r($this->parameters);
-        print_r($this->services);
+        print_r(array_keys($this->services));
     }
 }
