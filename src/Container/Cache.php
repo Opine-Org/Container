@@ -22,20 +22,24 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-namespace Opine;
+namespace Opine\Contiainer;
 
-class ContainerCache {
+class Cache {
     private $bundleService;
     private $root;
     private $cache;
     private $containerConfig = false;
     private $container;
+    private $cacheKey;
+    private $cacheFile;
 
     public function __construct ($root, $container, $bundleService, $cache) {
         $this->root = $root;
         $this->bundleService = $bundleService;
         $this->cache = $cache;
         $this->container = $container;
+        $this->cacheFile = $this->root . '/../cache/container.json';
+        $this->cacheKey = $this->root . '-container';
     }
 
     public function read ($containerFile) {
@@ -105,7 +109,12 @@ class ContainerCache {
 
     public function write () {
         $this->unfold($this->containerConfig);
-        file_put_contents($this->root . '/../cache/container.json', json_encode($this->containerConfig, JSON_PRETTY_PRINT));
-        $this->cache->set($this->root . '-container', json_encode($this->containerConfig), 2, 0);
+        file_put_contents($this->cacheFile, json_encode($this->containerConfig, JSON_PRETTY_PRINT));
+        $this->cache->set($this->cacheKey, json_encode($this->containerConfig), 2, 0);
+    }
+
+    public function clear () {
+        unlink($this->cacheFile);
+        $this->cache->delete($this->cacheKey);
     }
 }
