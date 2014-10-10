@@ -134,6 +134,12 @@ class Container {
         }
     }
 
+    public function __set ($serviceName, $value) {
+        if ($value === null) {
+            unlink($this->services[$serviceName]);
+        }
+    }
+
     public function __get ($serviceName) {
         if ($serviceName == 'container') {
             return $this;
