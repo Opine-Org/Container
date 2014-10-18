@@ -27,19 +27,16 @@ namespace Opine\Container;
 class Cache {
     private $bundleService;
     private $root;
-    private $cache;
     private $containerConfig = false;
     private $container;
     private $cacheKey;
     private $cacheFile;
 
-    public function __construct ($root, $container, $bundleService, $cache) {
+    public function __construct ($root, $container, $bundleService) {
         $this->root = $root;
         $this->bundleService = $bundleService;
-        $this->cache = $cache;
         $this->container = $container;
-        $this->cacheFile = $this->root . '/../cache/container.json';
-        $this->cacheKey = $this->root . '-container';
+        $this->cacheFile = $root . '/../cache/container.json';
     }
 
     public function read ($containerFile) {
@@ -109,12 +106,12 @@ class Cache {
 
     public function write () {
         $this->unfold($this->containerConfig);
-        file_put_contents($this->cacheFile, json_encode($this->containerConfig, JSON_PRETTY_PRINT));
-        $this->cache->set($this->cacheKey, json_encode($this->containerConfig), 2, 0);
+        $json = json_encode($this->containerConfig, JSON_PRETTY_PRINT);
+        file_put_contents($this->cacheFile, $json);
+        return $json;
     }
 
     public function clear () {
         unlink($this->cacheFile);
-        $this->cache->delete($this->cacheKey);
     }
 }

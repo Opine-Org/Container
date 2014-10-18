@@ -26,7 +26,6 @@ namespace Opine;
 use Symfony\Component\Yaml\Yaml;
 use ReflectionClass;
 use Exception;
-use Opine\Cache;
 use Opine\BundleRoute;
 
 class Container {
@@ -39,17 +38,18 @@ class Container {
     public function __construct ($root, $fallback=false, $nocache=false) {
         $this->root = $root;
         $config = false;
-        if ($nocache === false) {
-            $cache = new Cache();
-            $config = $cache->get($root . '-container');
+        if ($nocache !== true) {
+            if (is_array($nocache)) {
+                $config = $nocache;
+            }
             $path = $root . '/../cache/container.json';
             if ($config == false && file_exists($path)) {
                 $config = file_get_contents($path);
                 if ($config == false && $fallback === false) {
                     return;
                 }
+                $config = (array)json_decode($config, true);
             }
-            $config = (array)json_decode($config, true);
             $this->_processConfig($config);
         }
         if ($config == false && $fallback !== false) {
@@ -159,7 +159,7 @@ class Container {
                     $arguments = $this->_arguments($serviceName, $service['arguments'], 'construct');
                 }
                 //try {
-                    $rc = new \ReflectionClass($service['class']);
+                    $rc = new ReflectionClass($service['class']);
                     self::$instances[$serviceName] = $rc->newInstanceArgs($arguments);
                     $this->_calls($serviceName, $service, self::$instances[$serviceName]);
                 //} catch (Exception $e) {
@@ -173,7 +173,7 @@ class Container {
                 $arguments = $this->_arguments($serviceName, $service['arguments'], 'construct');
             }
             try {
-                $rc = new \ReflectionClass($service['class']);
+                $rc = new ReflectionClass($service['class']);
                 $serviceInstance = $rc->newInstanceArgs($arguments);
             } catch (Exception $e) {
                 $serviceInstance = false;
