@@ -26,7 +26,7 @@ namespace Opine;
 use Symfony\Component\Yaml\Yaml;
 use ReflectionClass;
 use Exception;
-use Opine\BundleRoute;
+use Opine\Bundle\Model as BundleModel;
 
 class Container {
     public $services = [];
@@ -59,7 +59,7 @@ class Container {
     }
 
     private function _bundles () {
-        $bundleService = new BundleRoute($this->root, $this);
+        $bundleService = new BundleModel($this->root, $this);
         $bundles = $bundleService->bundles();
         if (!is_array($bundles) || count($bundles) == 0) {
             return;
