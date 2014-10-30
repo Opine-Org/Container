@@ -112,6 +112,9 @@ class Cache {
     }
 
     public function clear () {
+        if (!file_exists($this->cacheFile)) {
+            return;
+        }
         unlink($this->cacheFile);
     }
 }
