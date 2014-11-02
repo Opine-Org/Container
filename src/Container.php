@@ -81,7 +81,7 @@ class Container {
         if (function_exists('yaml_parse_file')) {
             return yaml_parse_file($containerFile);
         }
-        return Yaml::parse($containerFile);
+        return Yaml::parse(file_get_contents($containerFile));
     }
 
     public function _readFile ($containerConfig) {
