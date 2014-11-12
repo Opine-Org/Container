@@ -45,10 +45,10 @@ class Cache {
         if (!is_array($bundles) || count($bundles) == 0) {
             return;
         }
-        $root = pathinfo($containerFile)['dirname'] . '/bundles/';
         foreach ($bundles as $bundleName => $bundle) {
-            $containerFile = $root . $bundleName . '/container.yml';
+            $containerFile = $bundle['root'] . '/../container.yml';
             if (!file_exists($containerFile)) {
+                echo 'No container in bundle: ', $containerFile, "\n";
                 continue;
             }
             $this->merge($containerFile);
