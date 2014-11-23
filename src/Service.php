@@ -40,6 +40,7 @@ class Service implements ContainerInterface {
     public function __construct ($root, ConfigInterface $configService, $fallback=false, $nocache=false) {
         $this->root = $root;
         $this->configService = $configService;
+        $this->set('config', $configService);
         $config = false;
         if ($nocache !== true) {
             if (is_array($nocache)) {
