@@ -41,6 +41,7 @@ class Service implements ContainerInterface {
         $this->root = $root;
         $this->configService = $configService;
         $this->set('config', $configService);
+        $this->set('container', $this);
         $config = false;
         if ($nocache !== true) {
             if (is_array($nocache)) {
@@ -145,9 +146,6 @@ class Service implements ContainerInterface {
     }
 
     public function get ($serviceName) {
-        if ($serviceName == 'container') {
-            return $this;
-        }
         if (!isset($this->services[$serviceName])) {
             return false;
         }
