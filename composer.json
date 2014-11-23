@@ -1,29 +1,34 @@
 {
-    "name": "opine\/container",
+    "name": "opine/container",
     "type": "library",
     "description": "Dependency Injection Container for readering YAML files",
     "keywords": [
         "Dependecy Injection",
         "YAML"
     ],
+    "minimum-stability": "dev",
     "license": "MIT",
     "authors": [
         {
             "name": "Ryan Mahoney",
             "email": "ryan@virtuecenter.com",
-            "homepage": "http:\/\/opine-php.org",
+            "homepage": "http://opine-php.org",
             "role": "Developer"
         }
     ],
     "require": {
         "php": ">=5.4.0",
-        "symfony\/yaml": "2.4.*@dev",
-        "opine\/bundle": "dev-master",
-        "opine\/cache": "dev-master"
+        "symfony/yaml": "2.4.*@dev",
+        "opine/bundle": "dev-master",
+        "opine/interfaces": "dev-master"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "3.7.32",
+        "opine/config": "dev-master"
     },
     "autoload": {
         "psr-4": {
-            "Opine\\": "src\/"
+            "Opine\\Container\\": "src/"
         }
     }
 }

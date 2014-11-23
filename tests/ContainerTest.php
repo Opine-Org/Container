@@ -1,17 +1,47 @@
 <?php
-namespace Opine;
+namespace Opine\Container;
 
-class ContainerTest extends \PHPUnit_Framework_TestCase {
-    private $db;
+use PHPUnit_Framework_TestCase;
+use Opine\Container\Service as Container;
+use Opine\Config\Service as Config;
+
+require __DIR__ . '/ServiceA.php';
+require __DIR__ . '/ServiceB.php';
+
+class ContainerTest extends PHPUnit_Framework_TestCase {
+    private $container;
 
     public function setup () {
-        date_default_timezone_set('UTC');
-        $root = __DIR__;
-        $container = new Container($root, $root . '/container.yml');
-        $this->db = $container->db;
+        $root = __DIR__ . '/../public';
+        $config = new Config($root);
+        $config->cacheSet();
+        $this->container = new Container($root, $config, $root . '/../container.yml');
     }
 
-    public function testSample () {
-        $this->assertTrue(true);
+    public function testShow () {
+        $container = $this->container->show();
+        $this->assertTrue(is_array($container));
+        $this->assertTrue(count($container['parameters']) == 2);
+        $this->assertTrue('abc' === $container['parameters']['test']);
+        $this->assertTrue('aService' == $container['services'][0] && 'bService' == $container['services'][1]);
+    }
+
+    public function testArguments () {
+        $serviceA = $this->container->get('aService');
+        $config = $serviceA->getConfig();
+        $parameter = $serviceA->getParameter();
+        $escaped = $serviceA->getEscaped();
+        $this->assertTrue(is_array($config));
+        $this->assertTrue('phpunit' === $config['name']);
+        $this->assertTrue('abc' === $parameter);
+        $this->assertTrue('%escaped' === $escaped);
+    }
+
+    public function testCalls () {
+        $serviceB = $this->container->get('bService');
+        $service = $serviceB->getService();
+        $parameter = $serviceB->getParameter();
+        $this->assertTrue('Test\ServiceA' === get_class($service));
+        $this->assertTrue('abc' === $parameter);
     }
 }

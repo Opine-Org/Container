@@ -1,6 +1,6 @@
 <?php
 /**
- * Opine\Container
+ * Opine\Container\Service
  *
  * Copyright (c)2013, 2014 Ryan Mahoney, https://github.com/Opine-Org <ryan@virtuecenter.com>
  *
@@ -22,21 +22,25 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-namespace Opine;
+namespace Opine\Container;
 use Symfony\Component\Yaml\Yaml;
 use ReflectionClass;
 use Exception;
 use Opine\Bundle\Model as BundleModel;
+use Opine\Interfaces\Config as ConfigInterface;
+use Opine\Interfaces\Container as ContainerInterface;
 
-class Container {
+class Service implements ContainerInterface {
     public $services = [];
     public $parameters = [];
     public $root;
     private $cache;
     private static $instances = [];
+    private $configService = false;
 
-    public function __construct ($root, $fallback=false, $nocache=false) {
+    public function __construct ($root, ConfigInterface $configService, $fallback=false, $nocache=false) {
         $this->root = $root;
+        $this->configService = $configService;
         $config = false;
         if ($nocache !== true) {
             if (is_array($nocache)) {
@@ -50,15 +54,15 @@ class Container {
                 }
                 $config = (array)json_decode($config, true);
             }
-            $this->_processConfig($config);
+            $this->processConfig($config);
         }
         if ($config == false && $fallback !== false) {
-            $this->_readFile($fallback);
-            $this->_bundles();
+            $this->readFile($fallback);
+            $this->bundles();
         }
     }
 
-    private function _bundles () {
+    private function bundles () {
         $bundleService = new BundleModel($this->root, $this);
         $bundles = $bundleService->bundles();
         if (!is_array($bundles) || count($bundles) == 0) {
@@ -69,11 +73,11 @@ class Container {
             if (!file_exists($containerFile)) {
                 continue;
             }
-            $this->_readFile($containerFile);
+            $this->readFile($containerFile);
         }
     }
 
-    public function _yaml ($containerFile) {
+    private function yaml ($containerFile) {
         if (!file_exists($containerFile)) {
             return ['services' => [], 'imports' => []];
         }
@@ -83,18 +87,18 @@ class Container {
         return Yaml::parse(file_get_contents($containerFile));
     }
 
-    public function _readFile ($containerConfig) {
+    private function readFile ($containerConfig) {
         if (!file_exists($containerConfig)) {
             throw new Exception ('Container file not found: ' . $containerConfig);
         }
-        $config = $this->_yaml($containerConfig);
+        $config = $this->yaml($containerConfig);
         if ($config == false) {
             throw new Exception('Can not parse YAML file: ' . $containerConfig);
         }
-        $this->_processConfig($config);
+        $this->processConfig($config);
     }
 
-    public function _processConfig ($config) {
+    private function processConfig ($config) {
         if (!isset($this->parameters['root'])) {
             $this->parameters['root'] = $this->root;
         }
@@ -102,9 +106,9 @@ class Container {
             foreach ($config['imports'] as $import) {
                 $first = substr($import, 0, 1);
                 if ($first != '/') {
-                    $import = $this->parameters['root'] . '/../' . $import; 
+                    $import = $this->parameters['root'] . '/../' . $import;
                 }
-                $this->_readFile($import);
+                $this->readFile($import);
             }
         }
         if (isset($config['parameters']) && is_array($config['parameters'])) {
@@ -133,13 +137,14 @@ class Container {
         }
     }
 
-    public function __set ($serviceName, $value) {
+    public function set ($serviceName, $value) {
         if ($value === null) {
             unlink($this->services[$serviceName]);
         }
+        $this->services[$serviceName] = $value;
     }
 
-    public function __get ($serviceName) {
+    public function get ($serviceName) {
         if ($serviceName == 'container') {
             return $this;
         }
@@ -155,21 +160,16 @@ class Container {
         if ($scope == 'container') {
             if (!isset(self::$instances[$serviceName])) {
                 if (isset($service['arguments'])) {
-                    $arguments = $this->_arguments($serviceName, $service['arguments'], 'construct');
+                    $arguments = $this->arguments($serviceName, $service['arguments'], 'construct');
                 }
-                //try {
-                    $rc = new ReflectionClass($service['class']);
-                    self::$instances[$serviceName] = $rc->newInstanceArgs($arguments);
-                    $this->_calls($serviceName, $service, self::$instances[$serviceName]);
-                //} catch (Exception $e) {
-                //    self::$instances[$serviceName] = false;
-                //    return;
-                //}
+                $rc = new ReflectionClass($service['class']);
+                self::$instances[$serviceName] = $rc->newInstanceArgs($arguments);
+                $this->calls($serviceName, $service, self::$instances[$serviceName]);
             }
             return self::$instances[$serviceName];
         } elseif ($scope == 'prototype') {
             if (isset($service['arguments'])) {
-                $arguments = $this->_arguments($serviceName, $service['arguments'], 'construct');
+                $arguments = $this->arguments($serviceName, $service['arguments'], 'construct');
             }
             try {
                 $rc = new ReflectionClass($service['class']);
@@ -180,11 +180,11 @@ class Container {
         } else {
             throw new Exception('Unknown container scope: ' . $scope);
         }
-        $this->_calls($serviceName, $service, $serviceInstance);
+        $this->calls($serviceName, $service, $serviceInstance);
         return $serviceInstance;
     }
 
-    private function _calls ($serviceName, $service, $serviceInstance) {
+    private function calls ($serviceName, $service, $serviceInstance) {
         if (!isset($service['calls']) || !is_array($service['calls'])) {
             return;
         }
@@ -194,54 +194,86 @@ class Container {
             }
             $arguments = [];
             if (isset($call[1]) && is_array($call[1])) {
-                $arguments = $this->_arguments($serviceName, $call[1], 'call');
+                $arguments = $this->arguments($serviceName, $call[1]);
             }
             call_user_func_array([$serviceInstance, $call[0]], $arguments);
         }
     }
 
-    private function _arguments ($serviceName, &$arguments, $type) {
+    private function arguments ($serviceName, &$arguments) {
         if (!is_array($arguments)) {
             return [];
         }
         $argumentsOut = [];
         foreach ($arguments as $argument) {
-            $argumentsOut[] = $this->_argument($serviceName, $argument, $type);
+            $argumentsOut[] = $this->argument($serviceName, $argument);
         }
         return $argumentsOut;
     }
 
-    private function _argument ($serviceName, $argument, $type) {
+    private function argument ($serviceName, $argument) {
+        if (substr($argument, 0, 7) == 'config.') {
+            if ($this->configService === false) {
+                throw new Exception('For service container to inject configuration, configuration object must be set.');
+            }
+            $argument = substr($argument, 7);
+            return $this->configService->get($argument);
+        }
         $first = substr($argument, 0, 1);
-        $second = substr($argument, 1, 1);
+        $optional = false;
         switch ($first) {
             case '%':
-                $parameter = substr($argument, 1, -1);
-                if (!isset($this->parameters[$parameter])) {
-                    if ($second == '?') { 
-                        $arguments[] = null;
-                        break;
-                    }
-                    throw new \Excpetion($serviceName . ' ' . $type . ' requires parameter ' . $parameter . ', not set');
+                $escape = substr($argument, 1, 1);
+                if ($escape == '%') {
+                    return substr($argument, 1);
                 }
-                return $this->_argument($serviceName, $this->parameters[$parameter], $type);
-                break;
+                $parameter = substr($argument, 1, -1);
+                $optional = substr($parameter, 0, 1);
+                if ($optional == '?') {
+                    $optional = true;
+                    $parameter = substr($argument, 1);
+                }
+                if (!isset($this->parameters[$parameter])) {
+                    if ($optional) {
+                        return null;
+                    } else {
+                        throw new Exception($serviceName . ' requires parameter ' . $parameter . ', not set');
+                    }
+                }
+                return $this->parameters[$parameter];
 
             case '@':
                 $argService = substr($argument, 1);
-                if ($serviceName == $argService) {
-                    throw new Exception('Circular reference, ' . $serviceName . ' references ' . $serviceName);
+                $escape = substr($argService, 0, 1);
+                if ($escape == '@') {
+                    return $argService;
                 }
-                return $this->__get($argService);
-                break;
+                $optional = substr($argService, 0, 1);
+                if ($optional == '?') {
+                    $optional = true;
+                    $argService = substr($argService, 1);
+                }
+                if ($serviceName == $argService) {
+                    throw new Exception('Circular reference to self, ' . $serviceName . ' references ' . $serviceName);
+                }
+                if (!isset($this->services[$argService])) {
+                    if ($optional) {
+                        return null;
+                    } else {
+                        throw new Exception('Service: ' . $argService . ' not defined in container');
+                    }
+                }
+                return $this->get($argService);
 
             default:
                 return $argument;
         }
     }
 
-    public function _show () {
-        print_r($this->parameters);
-        print_r(array_keys($this->services));
+    public function show () {
+        return [
+            'parameters' => $this->parameters,
+            'services'   => array_keys($this->services)
+        ];
     }
 }

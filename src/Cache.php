@@ -1,6 +1,6 @@
 <?php
 /**
- * Opine\Container
+ * Opine\Container\Cache
  *
  * Copyright (c)2013, 2014 Ryan Mahoney, https://github.com/Opine-Org <ryan@virtuecenter.com>
  *
@@ -10,10 +10,10 @@
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -89,10 +89,10 @@ class Cache {
         }
         if (isset($config['imports']) && is_array($config['imports'])) {
             while (count($config['imports']) > 0) {
-                $import = $config['imports'][0]; 
+                $import = $config['imports'][0];
                 $first = substr($import, 0, 1);
                 if ($first != '/') {
-                    $import = $this->root . '/../' . $import; 
+                    $import = $this->root . '/../' . $import;
                 }
                 unset($config['imports'][0]);
                 sort($config['imports']);
