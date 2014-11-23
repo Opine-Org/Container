@@ -1,4 +1,4 @@
 services:
     containerCache:
         class:     'Opine\Container\Cache'
-        arguments: ['%root%', '@container', '@bundleModel']
+        arguments: ['%root%', '@bundleModel']

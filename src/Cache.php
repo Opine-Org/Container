@@ -24,23 +24,23 @@
  */
 namespace Opine\Container;
 
+use Symfony\Component\Yaml\Yaml;
+
 class Cache {
     private $bundleService;
     private $root;
     private $containerConfig = false;
-    private $container;
     private $cacheKey;
     private $cacheFile;
 
-    public function __construct ($root, $container, $bundleService) {
+    public function __construct ($root, $bundleService) {
         $this->root = $root;
         $this->bundleService = $bundleService;
-        $this->container = $container;
         $this->cacheFile = $root . '/../cache/container.json';
     }
 
     public function read ($containerFile) {
-        $this->containerConfig = $this->container->_yaml($containerFile);
+        $this->containerConfig = $this->yaml($containerFile);
         $bundles = $this->bundleService->bundles();
         if (!is_array($bundles) || count($bundles) == 0) {
             return;
@@ -56,7 +56,7 @@ class Cache {
     }
 
     private function merge ($containerFile) {
-        $config = $this->container->_yaml($containerFile);
+        $config = $this->yaml($containerFile);
         if (isset($config['imports']) && is_array($config['imports'])) {
             foreach ($config['imports'] as $path) {
                 if (!in_array($path, $this->containerConfig['imports'])) {
@@ -97,7 +97,7 @@ class Cache {
                 unset($config['imports'][0]);
                 sort($config['imports']);
                 if (file_exists($import)) {
-                    $subconfig = $this->container->_yaml($import);
+                    $subconfig = $this->yaml($import);
                     $this->unfold($subconfig, true);
                 }
             }
@@ -116,5 +116,15 @@ class Cache {
             return;
         }
         unlink($this->cacheFile);
+    }
+
+    private function yaml ($containerFile) {
+        if (!file_exists($containerFile)) {
+            return ['services' => [], 'imports' => []];
+        }
+        if (function_exists('yaml_parse_file')) {
+            return yaml_parse_file($containerFile);
+        }
+        return Yaml::parse(file_get_contents($containerFile));
     }
 }
