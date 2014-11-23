@@ -23,7 +23,11 @@ class ContainerTest extends PHPUnit_Framework_TestCase {
         $this->assertTrue(is_array($container));
         $this->assertTrue(count($container['parameters']) == 2);
         $this->assertTrue('abc' === $container['parameters']['test']);
-        $this->assertTrue('config' == $container['services'][0] && 'aService' == $container['services'][1] && 'bService' == $container['services'][2]);
+        $this->assertTrue(
+            'config' == $container['services'][0] &&
+            'container' == $container['services'][1] &&
+            'aService' == $container['services'][2] &&
+            'bService' == $container['services'][3]);
     }
 
     public function testArguments () {
