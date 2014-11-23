@@ -34,7 +34,6 @@ class Service implements ContainerInterface {
     public $services = [];
     public $parameters = [];
     public $root;
-    private $cache;
     private static $instances = [];
     private $configService = false;
 
