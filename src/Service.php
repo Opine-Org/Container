@@ -138,11 +138,17 @@ class Service implements ContainerInterface {
         }
     }
 
-    public function set ($serviceName, $value) {
+    public function set ($serviceName, $value, $scope='container', Array $arguments=[], Array $calls=[]) {
         if ($value === null) {
-            unlink($this->services[$serviceName]);
+            unset(self::$instances[$serviceName]);
+            return;
         }
-        $this->services[$serviceName] = $value;
+        self::$instances[$serviceName] = $value;
+        $this->services[$serviceName] = [
+            'scope'     => $scope,
+            'arguments' => $arguments,
+            'calls'     => $calls
+        ];
     }
 
     public function get ($serviceName) {
