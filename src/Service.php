@@ -30,14 +30,25 @@ use Opine\Bundle\Model as BundleModel;
 use Opine\Interfaces\Config as ConfigInterface;
 use Opine\Interfaces\Container as ContainerInterface;
 
-class Service implements ContainerInterface {
-    public $services = [];
-    public $parameters = [];
-    public $root;
+final class Service implements ContainerInterface {
+    private $services = [];
+    private $parameters = [];
+    private $root;
     private static $instances = [];
     private $configService = false;
 
-    public function __construct ($root, ConfigInterface $configService, $fallback=false, $nocache=false) {
+    public static function instance ($root=false, $configService=false, $fallback=false, $nocache=false) {
+        static $container = null;
+        if ($container === null) {
+            if ($root === false) {
+                throw new Exception('Can not get container instance without passing root and config service.');
+            }
+            $container = new Service($root, $configService, $fallback, $nocache);
+        }
+        return $container;
+    }
+
+    private function __construct ($root, ConfigInterface $configService, $fallback, $nocache) {
         $this->root = $root;
         $this->configService = $configService;
         $this->set('config', $configService);

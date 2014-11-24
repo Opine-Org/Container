@@ -15,7 +15,7 @@ class ContainerTest extends PHPUnit_Framework_TestCase {
         $root = __DIR__ . '/../public';
         $config = new Config($root);
         $config->cacheSet();
-        $this->container = new Container($root, $config, $root . '/../container.yml');
+        $this->container = Container::instance($root, $config, $root . '/../container.yml');
     }
 
     public function testShow () {
