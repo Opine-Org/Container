@@ -41,7 +41,7 @@ final class Service implements ContainerInterface {
         static $container = null;
         if ($container === null) {
             if ($root === false) {
-                throw new Exception('Can not get container instance without passing root and config service.');
+                throw new Exception('Can not get container instance without passing root and config service');
             }
             $container = new Service($root, $configService, $fallback, $nocache);
         }
