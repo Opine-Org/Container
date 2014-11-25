@@ -36,7 +36,7 @@ class Cache {
     public function __construct ($root, $bundleService) {
         $this->root = $root;
         $this->bundleService = $bundleService;
-        $this->cacheFile = $root . '/../cache/container.json';
+        $this->cacheFile = $root . '/../var/cache/container.json';
     }
 
     public function read ($containerFile) {
@@ -46,7 +46,7 @@ class Cache {
             return;
         }
         foreach ($bundles as $bundleName => $bundle) {
-            $containerFile = $bundle['root'] . '/../container.yml';
+            $containerFile = $bundle['root'] . '/../config/container.yml';
             if (!file_exists($containerFile)) {
                 echo 'No container in bundle: ', $containerFile, "\n";
                 continue;

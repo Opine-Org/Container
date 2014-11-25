@@ -58,7 +58,7 @@ final class Service implements ContainerInterface {
             if (is_array($nocache)) {
                 $config = $nocache;
             }
-            $path = $root . '/../cache/container.json';
+            $path = $root . '/../var/cache/container.json';
             if ($config == false && file_exists($path)) {
                 $config = file_get_contents($path);
                 if ($config == false && $fallback === false) {
@@ -81,7 +81,7 @@ final class Service implements ContainerInterface {
             return;
         }
         foreach ($bundles as $bundleName => $bundle) {
-            $containerFile = $bundle['root'] . '/../container.yml';
+            $containerFile = $bundle['root'] . '/../config/container.yml';
             if (!file_exists($containerFile)) {
                 continue;
             }
