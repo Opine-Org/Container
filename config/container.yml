@@ -1,2 +1,2 @@
 imports:
-    - test-container.yml
+    - config/test-container.yml
