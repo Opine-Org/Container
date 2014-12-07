@@ -66,7 +66,7 @@ final class Service implements ContainerInterface {
                 }
                 $config = (array)json_decode($config, true);
             }
-            $this->processConfig($config);
+            $this->processConfig($config, dirname($path));
         }
         if ($config == false && $fallback !== false) {
             $this->readFile($fallback);
@@ -107,10 +107,10 @@ final class Service implements ContainerInterface {
         if ($config == false) {
             throw new Exception('Can not parse YAML file: ' . $containerConfig);
         }
-        $this->processConfig($config);
+        $this->processConfig($config, dirname($containerConfig));
     }
 
-    private function processConfig ($config) {
+    private function processConfig ($config, $dirname) {
         if (!isset($this->parameters['root'])) {
             $this->parameters['root'] = $this->root;
         }
@@ -118,7 +118,7 @@ final class Service implements ContainerInterface {
             foreach ($config['imports'] as $import) {
                 $first = substr($import, 0, 1);
                 if ($first != '/') {
-                    $import = dirname($config) . '/' . $import;
+                    $import = $dirname . '/' . $import;
                 }
                 $this->readFile($import);
             }
