@@ -118,7 +118,7 @@ final class Service implements ContainerInterface {
             foreach ($config['imports'] as $import) {
                 $first = substr($import, 0, 1);
                 if ($first != '/') {
-                    $import = $this->parameters['root'] . '/../' . $import;
+                    $import = dirname($config) . '/' . $import;
                 }
                 $this->readFile($import);
             }
