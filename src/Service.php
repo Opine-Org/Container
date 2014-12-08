@@ -90,9 +90,6 @@ final class Service implements ContainerInterface {
     }
 
     private function yaml ($containerFile) {
-        if (!file_exists($containerFile)) {
-            return ['services' => [], 'imports' => []];
-        }
         if (function_exists('yaml_parse_file')) {
             return yaml_parse_file($containerFile);
         }

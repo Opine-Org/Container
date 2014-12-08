@@ -29,7 +29,7 @@ use Symfony\Component\Yaml\Yaml;
 class Cache {
     private $bundleService;
     private $root;
-    private $containerConfig = false;
+    private $containerConfig;
     private $cacheKey;
     private $cacheFile;
 
@@ -37,10 +37,15 @@ class Cache {
         $this->root = $root;
         $this->bundleService = $bundleService;
         $this->cacheFile = $root . '/../var/cache/container.json';
+        $this->containerConfig = [
+            'imports' => [],
+            'services' => [],
+            'parameters' => []
+        ];
     }
 
     public function read ($containerFile) {
-        $this->containerConfig = $this->yaml($containerFile);
+        $this->merge($containerFile);
         $bundles = $this->bundleService->bundles();
         if (!is_array($bundles) || count($bundles) == 0) {
             return;
@@ -59,9 +64,11 @@ class Cache {
         $config = $this->yaml($containerFile);
         if (isset($config['imports']) && is_array($config['imports'])) {
             foreach ($config['imports'] as $path) {
-                if (!in_array($path, $this->containerConfig['imports'])) {
-                    $this->containerConfig['imports'][] = $path;
+                $first = substr($path, 0, 1);
+                if ($first != '/') {
+                    $path = dirname($containerFile) . '/' . $path;
                 }
+                $this->merge($path);
             }
         }
         if (isset($config['services']) && is_array($config['services'])) {
@@ -77,35 +84,7 @@ class Cache {
         var_dump($this->containerConfig);
     }
 
-    private function unfold (&$config, $sub=false) {
-        if ($sub === true) {
-            if (isset($config['services']) && is_array($config['services'])) {
-                foreach ($config['services'] as $name => $service) {
-                    if (!array_key_exists($name, $this->containerConfig['services'])) {
-                        $this->containerConfig['services'][$name] = $service;
-                    }
-                }
-            }
-        }
-        if (isset($config['imports']) && is_array($config['imports'])) {
-            while (count($config['imports']) > 0) {
-                $import = $config['imports'][0];
-                $first = substr($import, 0, 1);
-                if ($first != '/') {
-                    $import = $this->root . '/../' . $import;
-                }
-                unset($config['imports'][0]);
-                sort($config['imports']);
-                if (file_exists($import)) {
-                    $subconfig = $this->yaml($import);
-                    $this->unfold($subconfig, true);
-                }
-            }
-        }
-    }
-
     public function write () {
-        $this->unfold($this->containerConfig);
         $json = json_encode($this->containerConfig, JSON_PRETTY_PRINT);
         file_put_contents($this->cacheFile, $json);
         return $json;
@@ -120,7 +99,7 @@ class Cache {
 
     private function yaml ($containerFile) {
         if (!file_exists($containerFile)) {
-            return ['services' => [], 'imports' => []];
+            throw new Exception ('Container file not found: ' . $containerFile);
         }
         if (function_exists('yaml_parse_file')) {
             return yaml_parse_file($containerFile);
