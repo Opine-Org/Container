@@ -1,4 +1,0 @@
-services:
-    containerCache:
-        class:     'Opine\Container\Cache'
-        arguments: ['%root%', '@bundleModel']

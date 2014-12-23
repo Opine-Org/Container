@@ -1,8 +1,9 @@
-[![Stories in Ready](https://badge.waffle.io/Opine-Org/Container.png?label=ready&title=Ready)](https://waffle.io/Opine-Org/Container)
 Container
 =========
 
-Service Container absed on YAML.
+Service Container.
+
+[![Stories in Ready](https://badge.waffle.io/Opine-Org/Container.png?label=ready&title=Ready)](https://waffle.io/Opine-Org/Container)
 
 [![Build Status](https://travis-ci.org/Opine-Org/Container.svg?branch=master)](https://travis-ci.org/Opine-Org/Container)
 

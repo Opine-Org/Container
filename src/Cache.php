@@ -51,7 +51,7 @@ class Cache {
             return;
         }
         foreach ($bundles as $bundleName => $bundle) {
-            $containerFile = $bundle['root'] . '/../config/container.yml';
+            $containerFile = $bundle['root'] . '/../config/containers/container.yml';
             if (!file_exists($containerFile)) {
                 echo 'No container in bundle: ', $containerFile, "\n";
                 continue;
