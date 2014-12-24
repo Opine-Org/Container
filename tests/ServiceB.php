@@ -1,23 +1,28 @@
 <?php
 namespace Test;
 
-class ServiceB {
+class ServiceB
+{
     private $serviceA;
     private $parameter;
 
-    public function __construct ($serviceA) {
+    public function __construct($serviceA)
+    {
         $this->serviceA = $serviceA;
     }
 
-    public function someMethod ($parameter) {
+    public function someMethod($parameter)
+    {
         $this->parameter = $parameter;
     }
 
-    public function getParameter () {
+    public function getParameter()
+    {
         return $this->parameter;
     }
 
-    public function getService () {
+    public function getService()
+    {
         return $this->serviceA;
     }
 }

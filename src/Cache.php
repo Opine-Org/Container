@@ -26,32 +26,35 @@ namespace Opine\Container;
 
 use Symfony\Component\Yaml\Yaml;
 
-class Cache {
+class Cache
+{
     private $bundleService;
     private $root;
     private $containerConfig;
     private $cacheKey;
     private $cacheFile;
 
-    public function __construct ($root, $bundleService) {
+    public function __construct($root, $bundleService)
+    {
         $this->root = $root;
         $this->bundleService = $bundleService;
-        $this->cacheFile = $root . '/../var/cache/container.json';
+        $this->cacheFile = $root.'/../var/cache/container.json';
         $this->containerConfig = [
             'imports' => [],
             'services' => [],
-            'parameters' => []
+            'parameters' => [],
         ];
     }
 
-    public function read ($containerFile) {
+    public function read($containerFile)
+    {
         $this->merge($containerFile);
         $bundles = $this->bundleService->bundles();
         if (!is_array($bundles) || count($bundles) == 0) {
             return;
         }
         foreach ($bundles as $bundleName => $bundle) {
-            $containerFile = $bundle['root'] . '/../config/containers/container.yml';
+            $containerFile = $bundle['root'].'/../config/containers/container.yml';
             if (!file_exists($containerFile)) {
                 echo 'No container in bundle: ', $containerFile, "\n";
                 continue;
@@ -60,13 +63,14 @@ class Cache {
         }
     }
 
-    private function merge ($containerFile) {
+    private function merge($containerFile)
+    {
         $config = $this->yaml($containerFile);
         if (isset($config['imports']) && is_array($config['imports'])) {
             foreach ($config['imports'] as $path) {
                 $first = substr($path, 0, 1);
                 if ($first != '/') {
-                    $path = dirname($containerFile) . '/' . $path;
+                    $path = dirname($containerFile).'/'.$path;
                 }
                 $this->merge($path);
             }
@@ -80,30 +84,36 @@ class Cache {
         }
     }
 
-    public function show () {
+    public function show()
+    {
         var_dump($this->containerConfig);
     }
 
-    public function write () {
+    public function write()
+    {
         $json = json_encode($this->containerConfig, JSON_PRETTY_PRINT);
         file_put_contents($this->cacheFile, $json);
+
         return $json;
     }
 
-    public function clear () {
+    public function clear()
+    {
         if (!file_exists($this->cacheFile)) {
             return;
         }
         unlink($this->cacheFile);
     }
 
-    private function yaml ($containerFile) {
+    private function yaml($containerFile)
+    {
         if (!file_exists($containerFile)) {
-            throw new Exception ('Container file not found: ' . $containerFile);
+            throw new Exception('Container file not found: '.$containerFile);
         }
         if (function_exists('yaml_parse_file')) {
             return yaml_parse_file($containerFile);
         }
+
         return Yaml::parse(file_get_contents($containerFile));
     }
 }

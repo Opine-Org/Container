@@ -1,26 +1,31 @@
 <?php
 namespace Test;
 
-class ServiceA {
+class ServiceA
+{
     private $config;
     private $parameter;
     private $escaped;
 
-    public function __construct ($config, $parameter, $escaped) {
+    public function __construct($config, $parameter, $escaped)
+    {
         $this->config = $config;
         $this->parameter = $parameter;
         $this->escaped = $escaped;
     }
 
-    public function getConfig () {
+    public function getConfig()
+    {
         return $this->config;
     }
 
-    public function getParameter () {
+    public function getParameter()
+    {
         return $this->parameter;
     }
 
-    public function getEscaped () {
+    public function getEscaped()
+    {
         return $this->escaped;
     }
 }

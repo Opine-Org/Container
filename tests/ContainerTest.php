@@ -5,20 +5,23 @@ use PHPUnit_Framework_TestCase;
 use Opine\Container\Service as Container;
 use Opine\Config\Service as Config;
 
-require __DIR__ . '/ServiceA.php';
-require __DIR__ . '/ServiceB.php';
+require __DIR__.'/ServiceA.php';
+require __DIR__.'/ServiceB.php';
 
-class ContainerTest extends PHPUnit_Framework_TestCase {
+class ContainerTest extends PHPUnit_Framework_TestCase
+{
     private $container;
 
-    public function setup () {
-        $root = __DIR__ . '/../public';
+    public function setup()
+    {
+        $root = __DIR__.'/../public';
         $config = new Config($root);
         $config->cacheSet();
-        $this->container = Container::instance($root, $config, $root . '/../config/containers/test-container.yml');
+        $this->container = Container::instance($root, $config, $root.'/../config/containers/test-container.yml');
     }
 
-    public function testShow () {
+    public function testShow()
+    {
         $container = $this->container->show();
         $this->assertTrue(is_array($container));
         $this->assertTrue(count($container['parameters']) == 2);
@@ -30,7 +33,8 @@ class ContainerTest extends PHPUnit_Framework_TestCase {
             'bService' == $container['services'][3]);
     }
 
-    public function testArguments () {
+    public function testArguments()
+    {
         $serviceA = $this->container->get('aService');
         $config = $serviceA->getConfig();
         $parameter = $serviceA->getParameter();
@@ -41,7 +45,8 @@ class ContainerTest extends PHPUnit_Framework_TestCase {
         $this->assertTrue('%escaped' === $escaped);
     }
 
-    public function testCalls () {
+    public function testCalls()
+    {
         $serviceB = $this->container->get('bService');
         $service = $serviceB->getService();
         $parameter = $serviceB->getParameter();
