@@ -90,7 +90,7 @@ final class Service implements ContainerInterface {
     }
 
     private function bundles () {
-        $bundleService = new BundleModel($this->root, $this);
+        $bundleService = new BundleModel($this->root);
         $bundles = $bundleService->bundles();
         if (!is_array($bundles) || count($bundles) == 0) {
             return;
@@ -101,7 +101,7 @@ final class Service implements ContainerInterface {
     }
 
     private function processBundleContainer (&$bundle) {
-        $containerFile = $bundle['root'] . '/../config/container.yml';
+        $containerFile = $bundle['root'] . '/../config/containers/package-container.yml';
         if (!file_exists($containerFile)) {
             return;
         }
