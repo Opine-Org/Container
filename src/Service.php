@@ -23,6 +23,7 @@
  * THE SOFTWARE.
  */
 namespace Opine\Container;
+
 use Symfony\Component\Yaml\Yaml;
 use ReflectionClass;
 use Exception;
