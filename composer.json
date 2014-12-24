@@ -19,7 +19,7 @@
         "php"             : ">=5.5.0",
         "symfony/yaml"    : "2.6.1",
         "opine/bundle"    : "2.0.1",
-        "opine/interfaces": "1.0.0",
+        "opine/interfaces": "1.0.1",
         "opine/config"    : "3.0.1"
     },
     "require-dev": {
