@@ -38,29 +38,35 @@ final class Service implements ContainerInterface
     private $root;
     private static $instances = [];
     private $configService;
+    private $fallbackContainerPath;
 
-    public static function instance($root, ConfigInterface $configService, $fallbackContainerPath = null, $fileCache = true)
+    public static function instance($root = null, $configService = null, $fallbackContainerPath = null, $fileCache = true, Array $cache=[])
     {
+        static $container = null;
+        if ($container != null) {
+            return $container;
+        }
         if (empty($root)) {
             throw new Exception('Can not get container instance without passing root and config service');
         }
         if (!is_bool($fileCache)) {
             throw new Exception('Cache flag must be a boolean value');
         }
-        static $container = null;
-        if ($container != null) {
-            return $container;
-        }
-
-        return new Service($root, $configService, $fallbackContainerPath, $fileCache);
+        $container = new Service($root, $configService, $fallbackContainerPath, $fileCache, $cache);
+        return $container;
     }
 
-    private function __construct($root, ConfigInterface $configService, $fallbackContainerPath, $fileCache)
+    private function __construct($root, ConfigInterface $configService, $fallbackContainerPath, $fileCache, Array $cache=[])
     {
         $this->root = $root;
         $this->configService = $configService;
+        $this->fallbackContainerPath = $fallbackContainerPath;
         $this->set('config', $configService);
         $this->set('container', $this);
+        if (!empty($cache)) {
+            $this->processConfig($cache, dirname($fallbackContainerPath));
+            return;
+        }
         $status = $this->fileCache($root, $fileCache);
         $this->bootstrap($status, $fallbackContainerPath);
     }
@@ -91,7 +97,7 @@ final class Service implements ContainerInterface
             return;
         }
         $containerConfig = json_decode($containerConfig, true);
-        $this->processConfig($containerConfig, dirname($path));
+        $this->processConfig($containerConfig, dirname($this->fallbackContainerPath));
 
         return true;
     }
@@ -119,11 +125,11 @@ final class Service implements ContainerInterface
 
     private function yaml($containerFile)
     {
-        if (function_exists('yaml_parse_file')) {
-            return yaml_parse_file($containerFile);
+        try {
+            return Yaml::parse(file_get_contents($containerFile));
+        } catch (Exception $e) {
+            throw new Exception($containerFile . ': ' . $e->getMessage());
         }
-
-        return Yaml::parse(file_get_contents($containerFile));
     }
 
     private function readFile($containerPath)

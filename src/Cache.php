@@ -25,6 +25,7 @@
 namespace Opine\Container;
 
 use Symfony\Component\Yaml\Yaml;
+use Exception;
 
 class Cache
 {
@@ -54,7 +55,7 @@ class Cache
             return;
         }
         foreach ($bundles as $bundleName => $bundle) {
-            $containerFile = $bundle['root'].'/../config/containers/container.yml';
+            $containerFile = $bundle['root'].'/../config/containers/package-container.yml';
             if (!file_exists($containerFile)) {
                 echo 'No container in bundle: ', $containerFile, "\n";
                 continue;
@@ -110,10 +111,6 @@ class Cache
         if (!file_exists($containerFile)) {
             throw new Exception('Container file not found: '.$containerFile);
         }
-        if (function_exists('yaml_parse_file')) {
-            return yaml_parse_file($containerFile);
-        }
-
         return Yaml::parse(file_get_contents($containerFile));
     }
 }
