@@ -1,8 +1,0 @@
-{
-    "default": {
-        "db": {
-            "name": "phpunit",
-            "conn": "mongodb:\/\/unit:test@localhost\/phpunit"
-        }
-    }
-}
