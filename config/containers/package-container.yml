@@ -3,4 +3,4 @@ services:
         class:     Opine\Container\Cache
         arguments:
             - %root%
-            - @bundleModel
+            - "@bundleModel"
