@@ -30,6 +30,5 @@
         "psr-4": {
             "Opine\\Container\\": "src/"
         }
-    },
-    "version": "2.0.12"
+    }
 }
